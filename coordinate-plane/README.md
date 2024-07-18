@@ -1,4 +1,4 @@
-# graphing-tool
+# coordinate-plane
 
 ## Project setup
 ```
