@@ -1,4 +1,4 @@
-const { defineConfig } = require('@vue/cli-service')
-module.exports = defineConfig({
-  publicPath: '/coordinate-plane/'  //you have to add your repo name here 
-})
+module.exports = {
+    publicPath: '/coordinate-plane/'  // Adjust according to your GitHub repo name or other needs
+  };
+  
