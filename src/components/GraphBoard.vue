@@ -158,23 +158,35 @@ methods: {
       }
     },
     drawLines() {
-      if (this.points.length < 2) return;
-      const numPoints = 21; // From -10 to 10 inclusive
-      const step = this.$refs.canvas.width / (numPoints - 1);
-      const ctx = this.$refs.canvas.getContext('2d');
-      ctx.beginPath();
-      this.points.forEach((point, index) => {
-        const canvasX = (point.x + 10) * step;
-        const canvasY = (10 - point.y) * step;
-        if (index === 0) {
-          ctx.moveTo(canvasX, canvasY);
-        } else {
-          ctx.lineTo(canvasX, canvasY);
-        }
-      });
-      ctx.strokeStyle = '#ff0000';
-      ctx.stroke();
-    },
+  if (this.points.length < 2 || this.slope === null) return;
+
+  const ctx = this.$refs.canvas.getContext('2d');
+  const canvasWidth = this.$refs.canvas.width;
+  const canvasHeight = this.$refs.canvas.height;
+  const numPoints = 21; // From -10 to 10 inclusive
+  const step = canvasWidth / (numPoints - 1);
+
+  // Calculate start and end points of the line on the canvas
+  const xStart = -10; // Start from leftmost point on the canvas
+  const xEnd = 10;   // End at the rightmost point on the canvas
+  const yStart = this.slope * xStart + this.yIntercept;
+  const yEnd = this.slope * xEnd + this.yIntercept;
+
+  // Convert these points to canvas coordinates
+  const canvasXStart = (xStart + 10) * step;
+  const canvasYStart = canvasHeight - (yStart + 10) * step;
+  const canvasXEnd = (xEnd + 10) * step;
+  const canvasYEnd = canvasHeight - (yEnd + 10) * step;
+
+  // Draw the line
+  ctx.beginPath();
+  ctx.moveTo(canvasXStart, canvasYStart);
+  ctx.lineTo(canvasXEnd, canvasYEnd);
+  ctx.strokeStyle = 'blue'; // Change the line color to blue
+  ctx.lineWidth = 2; // Optional: Set the line width
+  ctx.stroke();
+}
+,
     labelPoints() {
       const numPoints = 21; // From -10 to 10 inclusive
       const step = this.$refs.canvas.width / (numPoints - 1);
