@@ -78,3 +78,73 @@ export function calculateSlopeAndIntercept(points) {
 
   return { slope, yIntercept };
 }
+
+
+export function check_answer(points,maxPoints,slope,var1,yIntercept,var2) {
+  let message = "Please select exactly two points.";
+  if (points.length === maxPoints) {
+    const { slope, yIntercept } = calculateSlopeAndIntercept(points);
+    if (slope === var1 && yIntercept === var2) {
+      message = 'Correct! Great job.';
+    } else {
+      message = "Incorrect, let's try again.";
+    }
+  }
+  return message;
+}
+
+export function drawGraph(x_abs_val,y_abs_val,
+  points,slope, yIntercept,
+  canvasWidth,canvasHeight,
+  canvasContext,
+  contextFont="10px Arial",
+  contextTextAlign="center",
+  contextTextBaseline="middle",
+  contextStrokeStyle="#ddd",
+  contextGridStyle='#000') {
+  const ctx = canvasContext;
+  const numPoints = x_abs_val + y_abs_val + 1;
+  const step = canvasWidth / (numPoints - 1);
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    // Draw grid and labels
+    ctx.font = contextFont;
+    ctx.textAlign = contextTextAlign;
+    ctx.textBaseline = contextTextBaseline;
+    for (let i = 0; i < numPoints; i++) {
+      const pos = step * i;
+      const label = i - x_abs_val; // Shift index to get labels from -10 to 10
+
+      // Draw vertical grid lines
+      ctx.beginPath();
+      ctx.moveTo(pos, 0);
+      ctx.lineTo(pos, canvasHeight);
+      ctx.strokeStyle = contextStrokeStyle;
+      ctx.stroke();
+
+      // Draw horizontal grid lines
+      ctx.beginPath();
+      ctx.moveTo(0, pos);
+      ctx.lineTo(canvasWidth, pos);
+      ctx.stroke();
+
+      // Labels
+      if (label !== 0) { // Avoid drawing over origin labels
+        ctx.fillText(label, pos, canvasHeight / 2 + 15);
+        ctx.fillText(-label, canvasWidth / 2 - 15, pos);
+      }
+    }
+
+    // Draw axes
+    ctx.beginPath();
+    ctx.moveTo(canvasWidth / 2, 0);
+    ctx.lineTo(canvasWidth / 2, canvasHeight);
+    ctx.moveTo(0, canvasHeight / 2);
+    ctx.lineTo(canvasWidth, canvasHeight/ 2);
+    ctx.strokeStyle = contextGridStyle;
+    ctx.stroke();
+
+    // Redraw lines between points, labels, and equations if any
+    drawLines(x_abs_val,y_abs_val,points,canvasWidth,canvasHeight,canvasContext, slope, yIntercept);
+    labelPoints(x_abs_val,y_abs_val,points,canvasWidth,canvasContext);
+  }

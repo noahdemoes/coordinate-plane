@@ -32,7 +32,7 @@ margin: 10px;
 
 
 <script>
-import { selectRandomVariables,labelPoints, drawLines, calculateSlopeAndIntercept } from '../utils/plot.js';
+import { selectRandomVariables, drawLines, calculateSlopeAndIntercept, check_answer, drawGraph } from '../utils/plot.js';
   export default {
   data() {
       return {
@@ -55,57 +55,10 @@ import { selectRandomVariables,labelPoints, drawLines, calculateSlopeAndIntercep
     const { var1, var2 } = selectRandomVariables(this.slope_abs_val, this.y_intercept_abs_val);
     this.var1 = var1;
     this.var2 = var2;
-    this.drawGraph();
+    drawGraph(this.x_abs_val,this.y_abs_val,this.points,this.slope, this.yIntercept,this.$refs.canvas.width, this.$refs.canvas.height, this.$refs.canvas.getContext('2d'));
     drawLines(this.x_abs_val,this.y_abs_val,this.points,this.canvasWidth,this.canvasHeight,this.$refs.canvas.getContext('2d'), this.slope, this.yIntercept);
   },
 methods: {
-  drawGraph() {
-    const ctx = this.$refs.canvas.getContext('2d');
-    const numPoints = this.x_abs_val +this.y_abs_val + 1;
-    const step = this.$refs.canvas.width / (numPoints - 1);
-    ctx.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height);
-
-      // Draw grid and labels
-      ctx.font = "10px Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      for (let i = 0; i < numPoints; i++) {
-        const pos = step * i;
-        const label = i - this.x_abs_val; // Shift index to get labels from -10 to 10
-
-        // Draw vertical grid lines
-        ctx.beginPath();
-        ctx.moveTo(pos, 0);
-        ctx.lineTo(pos, this.$refs.canvas.height);
-        ctx.strokeStyle = '#ddd';
-        ctx.stroke();
-
-        // Draw horizontal grid lines
-        ctx.beginPath();
-        ctx.moveTo(0, pos);
-        ctx.lineTo(this.$refs.canvas.width, pos);
-        ctx.stroke();
-
-        // Labels
-        if (label !== 0) { // Avoid drawing over origin labels
-          ctx.fillText(label, pos, this.$refs.canvas.height / 2 + 15);
-          ctx.fillText(-label, this.$refs.canvas.width / 2 - 15, pos);
-        }
-      }
-
-      // Draw axes
-      ctx.beginPath();
-      ctx.moveTo(this.$refs.canvas.width / 2, 0);
-      ctx.lineTo(this.$refs.canvas.width / 2, this.$refs.canvas.height);
-      ctx.moveTo(0, this.$refs.canvas.height / 2);
-      ctx.lineTo(this.$refs.canvas.width, this.$refs.canvas.height / 2);
-      ctx.strokeStyle = '#000';
-      ctx.stroke();
-
-      // Redraw lines between points, labels, and equations if any
-      drawLines(this.x_abs_val,this.y_abs_val,this.points,this.canvasWidth,this.canvasHeight,this.$refs.canvas.getContext('2d'), this.slope, this.yIntercept);
-      labelPoints(this.x_abs_val,this.y_abs_val,this.points,this.canvasWidth,this.$refs.canvas.getContext('2d'));
-    },
     handleClick(event) {
       if (this.points.length >= this.maxPoints) {
         this.points = []; // Reset if two points were already selected
@@ -130,36 +83,24 @@ methods: {
         drawLines(this.x_abs_val,this.y_abs_val,this.points,this.canvasWidth,this.canvasHeight,this.$refs.canvas.getContext('2d'), this.slope, this.yIntercept);
       }
 
-      this.drawGraph(); // Redraw the graph to update the view
+      drawGraph(this.x_abs_val,this.y_abs_val,this.points,this.slope, this.yIntercept,this.$refs.canvas.width, this.$refs.canvas.height, this.$refs.canvas.getContext('2d'));
     },
 
-    submit() {
-    if (this.points.length === this.maxPoints) {
-      const { slope, yIntercept } = calculateSlopeAndIntercept(this.points);
-      this.slope = slope;
-      this.yIntercept = yIntercept;
-      if (this.slope === this.var1 && this.yIntercept === this.var2) {
-        this.message = 'Correct! Great job.';
-      } else {
-        this.message = "Incorrect, let's try again.";
-      }
-    } else {
-      this.message = 'Please select exactly two points.';
-    }
-  },
+    submit() {this.message = check_answer(this.points,this.maxPoints,this.slope,this.var1,this.yIntercept,this.var2);
+      console.log(this.message);
+    },
   reset() {
     this.points = [];
     this.slope = null;
     this.yIntercept = null;
     this.message = '';
-    this.drawGraph();
+    drawGraph(this.x_abs_val,this.y_abs_val,this.points,this.slope, this.yIntercept,this.$refs.canvas.width, this.$refs.canvas.height, this.$refs.canvas.getContext('2d'));
   },
   updateVariables() {
     const { var1, var2 } = selectRandomVariables(this.slope_abs_val, this.y_intercept_abs_val);
     this.var1 = var1;
     this.var2 = var2;
     this.reset();
-    //displayEquation(this.var1, this.var2, this.canvasWidth,this.$refs.canvas.getContext('2d'));
   },
 
   }
