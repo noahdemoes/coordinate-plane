@@ -6,7 +6,7 @@
   <div>
     <button @click="submit">Submit</button>
     <button @click="reset">Reset</button>
-    <button @click="selectRandomVariables">New Equation</button>
+    <button @click="updateVariables">New Equation</button>
     <div v-if="message">{{ message }}</div>
   </div>
 </template>
@@ -32,6 +32,7 @@ margin: 10px;
 
 
 <script>
+import { selectRandomVariables,displayEquation } from '../utils/plot.js';
   export default {
   data() {
       return {
@@ -42,22 +43,23 @@ margin: 10px;
       var1: null, // Slope from the equation
       var2: null, // Y-intercept from the equation
       message: '',
+      slope_abs_val: 5,
+      y_intercept_abs_val: 5,
+      x_abs_val: 10,
+      y_abs_val: 10,
       };
   },
   mounted() {
-      this.selectRandomVariables();
-      this.drawGraph();
+    const { var1, var2 } = selectRandomVariables(this.slope_abs_val, this.y_intercept_abs_val);
+    this.var1 = var1;
+    this.var2 = var2;
+    this.drawGraph();
+    displayEquation(this.var1, this.var2, this.canvasWidth,this.$refs.canvas.getContext('2d')); // Update to pass parameters
   },
 methods: {
-  selectRandomVariables() {
-    do {
-      this.var1 = Math.floor(Math.random() * 11) - 5;
-    } while (this.var1 === 0);
-    this.var2 = Math.floor(Math.random() * 11) - 5;
-  },
   drawGraph() {
     const ctx = this.$refs.canvas.getContext('2d');
-    const numPoints = 21;
+    const numPoints = this.x_abs_val +this.y_abs_val + 1;
     const step = this.$refs.canvas.width / (numPoints - 1);
     ctx.clearRect(0, 0, this.$refs.canvas.width, this.$refs.canvas.height);
 
@@ -67,7 +69,7 @@ methods: {
       ctx.textBaseline = "middle";
       for (let i = 0; i < numPoints; i++) {
         const pos = step * i;
-        const label = i - 10; // Shift index to get labels from -10 to 10
+        const label = i - this.x_abs_val; // Shift index to get labels from -10 to 10
 
         // Draw vertical grid lines
         ctx.beginPath();
@@ -101,7 +103,7 @@ methods: {
       // Redraw lines between points, labels, and equations if any
       this.drawLines();
       this.labelPoints();
-      this.displayEquation();
+      displayEquation(this.var1, this.var2, this.canvasWidth,this.$refs.canvas.getContext('2d'));
     },
     handleClick(event) {
       if (this.points.length >= this.maxPoints) {
@@ -111,12 +113,12 @@ methods: {
       }
 
       const rect = this.$refs.canvas.getBoundingClientRect();
-      const numPoints = 21; // From -10 to 10 inclusive
+      const numPoints = Math.abs(this.x_abs_val)*2+1; // From -10 to 10 inclusive
       const step = this.$refs.canvas.width / (numPoints - 1);
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-      const graphX = Math.round((x / step) - 10);
-      const graphY = Math.round(-(y / step) + 10);
+      const graphX = Math.round((x / step) - Math.abs(this.x_abs_val));
+      const graphY = Math.round(-(y / step) + Math.abs(this.y_abs_val));
 
       this.points.push({ x: graphX, y: graphY });
 
@@ -147,6 +149,13 @@ methods: {
     this.message = '';
     this.drawGraph();
   },
+  updateVariables() {
+    const { var1, var2 } = selectRandomVariables(this.slope_abs_val, this.y_intercept_abs_val);
+    this.var1 = var1;
+    this.var2 = var2;
+    this.reset();
+    displayEquation(this.var1, this.var2, this.canvasWidth,this.$refs.canvas.getContext('2d'));
+  },
     calculateSlopeAndIntercept() {
       const [p1, p2] = this.points;
       if (p1.x !== p2.x) {
@@ -163,20 +172,20 @@ methods: {
   const ctx = this.$refs.canvas.getContext('2d');
   const canvasWidth = this.$refs.canvas.width;
   const canvasHeight = this.$refs.canvas.height;
-  const numPoints = 21; // From -10 to 10 inclusive
+  const numPoints = this.x_abs_val + this.y_abs_val + 1;
   const step = canvasWidth / (numPoints - 1);
 
   // Calculate start and end points of the line on the canvas
-  const xStart = -10; // Start from leftmost point on the canvas
-  const xEnd = 10;   // End at the rightmost point on the canvas
+  const xStart = -1 * Math.abs(this.x_abs_val);
+  const xEnd = Math.abs(this.x_abs_val);
   const yStart = this.slope * xStart + this.yIntercept;
   const yEnd = this.slope * xEnd + this.yIntercept;
 
   // Convert these points to canvas coordinates
-  const canvasXStart = (xStart + 10) * step;
-  const canvasYStart = canvasHeight - (yStart + 10) * step;
-  const canvasXEnd = (xEnd + 10) * step;
-  const canvasYEnd = canvasHeight - (yEnd + 10) * step;
+  const canvasXStart = (xStart + Math.abs(this.x_abs_val)) * step;
+  const canvasYStart = canvasHeight - (yStart + Math.abs(this.y_abs_val)) * step;
+  const canvasXEnd = (xEnd + Math.abs(this.x_abs_val)) * step;
+  const canvasYEnd = canvasHeight - (yEnd + Math.abs(this.y_abs_val)) * step;
 
   // Draw the line
   ctx.beginPath();
@@ -188,22 +197,16 @@ methods: {
 }
 ,
     labelPoints() {
-      const numPoints = 21; // From -10 to 10 inclusive
+      const numPoints = Math.abs(this.x_abs_val)+Math.abs(this.y_abs_val)+1; // From -10 to 10 inclusive
       const step = this.$refs.canvas.width / (numPoints - 1);
       const ctx = this.$refs.canvas.getContext('2d');
       ctx.font = "12px Arial";
       this.points.forEach((point, index) => {
-        const canvasX = (point.x + 10) * step;
-        const canvasY = (10 - point.y) * step;
-        ctx.fillText(`Point ${index + 1}: (${point.x}, ${point.y})`, canvasX, canvasY - 10);
+        const canvasX = (point.x + Math.abs(this.x_abs_val)) * step;
+        const canvasY = (Math.abs(this.x_abs_val) - point.y) * step;
+        ctx.fillText(`Point ${index + 1}: (${point.x}, ${point.y})`, canvasX, canvasY - Math.abs(this.x_abs_val));
       });
     },
-    displayEquation() {
-    if (this.var1 !== null && this.var2 !== null) {
-      const ctx = this.$refs.canvas.getContext('2d');
-      ctx.font = "14px Arial";
-    }
-  }
 }
 }
 </script>
